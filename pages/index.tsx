@@ -2,183 +2,24 @@ import React, {useEffect, useState} from "react";
 import Image from 'next/image';
 import axios from "axios";
 import Link from "next/link";
-import { Doughnut } from 'react-chartjs-2';
+import 'chart.js/auto';
+import { Chart } from 'react-chartjs-2';
+
+
+import AddModal from "../components/AddModal";
+import LoggedIn from "../components/LoggedInElem";
 
 import icon from '../public/favicon.ico';
 import plusicon from '../public/plusicon.svg';
 import circleplus from '../public/circleplus.svg';
 import circleminus from '../public/circleminus.svg';
 
-import {
-    usePlaidLink,
-    PlaidLinkOptions,
-    PlaidLinkOnSuccess,
-} from 'react-plaid-link';
+import TransactionType from "../types/TransactionType";
+import InvestmentType from "../types/InvestmentType";
 
 //TODO input validation on forms
-const TransactionsElem = ({username, returnItems}: {username: string, returnItems: (balance: number, items: any[]) => void}) => {
-    const [transAmount, setTransAmount] = useState('');
-    const [transDate, setTransDate] = useState('');
-    const [transType, setTransType] = useState('');
-
-    const submitTransaction = (e: any) => {
-        e.preventDefault();
-        console.log(transType)
-        axios.patch('http://localhost:3500/api/transaction', {
-            username: username,
-            date: transDate,
-            type: 'transaction',
-            desc: transType,
-            amount: transAmount
-        })
-            .then((res) => {
-                document.getElementById('addModal').checked = false
-                returnItems(res.data.balance, res.data.items);
-            })
-    }
-
-    console.log(transType)
-    return (
-        <div className={'h-full w-full mt-4'}>
-            <div className={'flex flex-col items-center justify-center'}>
-                <form className="flex flex-col">
-                    <label className={'text-lg'}>Transaction Type</label>
-                    <select value={transType} onChange={(e) => setTransType(e.target.value)} className="select select-bordered w-full max-w-xs">
-                        <option>Purchase</option>
-                        <option>Withdrawal</option>
-                        <option>Other</option>
-                    </select>
-                    <label className={'text-lg'}>Transaction Amount</label>
-                    <input value={transAmount} onChange={(e) => setTransAmount(e.target.value)} type={'text'} className={`input input-bordered`} />
-                    <label className={'text-lg'}>Transaction Date</label>
-                    <input type={'date'} value={transDate} onChange={(e) => setTransDate(e.target.value)} className={`input input-bordered`} />
-                    <button className={'btn btn-accent mt-4'} onClick={(e) => submitTransaction(e)}>Submit</button>
-                </form>
-            </div>
-        </div>
-    )
-}
 
 //TODO onsubmit instead of onclick
-const DepositElem = ({username, returnItems}: {username: string, returnItems: (balance: number, items: any[]) => void}) => {
-    const [depositAmount, setDepositAmount] = useState('');
-    const [depositDate, setDepositDate] = useState('');
-
-    const submitDeposit = (e) => {
-        e.preventDefault();
-        console.log(username)
-        axios.patch('http://localhost:3500/api/deposit', {username: username, amount: depositAmount, date: depositDate})
-            .then((res) => {
-                console.log(res);
-                document.getElementById('addModal').checked = false
-                returnItems(res.data.balance, res.data.items);
-            })
-    }
-
-    return (
-        <div className={'h-full w-full mt-4'}>
-            <div className={'flex flex-col items-center justify-center'}>
-                <form className="flex flex-col">
-                    <label className={'text-lg'}>Deposit Amount</label>
-                    <input value={depositAmount} min={'1'} step={'any'} onChange={(e) => setDepositAmount(e.target.value)} type={'number'} className={`input input-bordered`} />
-                    <label className={'text-lg'}>Deposit Date</label>
-                    <input type={'date'} value={depositDate} onChange={(e) => setDepositDate(e.target.value)} className={`input input-bordered`} />
-                    <button className={'btn btn-accent mt-4'} onClick={(e) => submitDeposit(e)}>Submit</button>
-                </form>
-            </div>
-        </div>
-    )
-}
-
-const InvestmentElem = () => {
-    const [budgetAmount, setBudgetAmount] = useState('');
-    const [budgetStartDate, setBudgetStartDate] = useState('');
-    const [budgetEndDate, setBudgetEndDate] = useState('');
-
-    return (
-        <div className={'h-full w-full mt-4'}>
-            <div className={'flex flex-col items-center justify-center'}>
-                <form className="flex flex-col">
-                    <label className={'text-lg'}>Budget Amount</label>
-                    <input value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)} type={'text'} className={`input input-bordered`} />
-                    <label className={'text-lg'}>Budget Start Date</label>
-                    <input type={'date'} value={Date.now()} className={`input input-bordered`} />
-                    <label className={'text-lg'}>Budget End Date</label>
-                    <input type={'date'} value={Date.now()} className={`input input-bordered`} />
-                    <button className={'btn btn-accent mt-4'}>Submit</button>
-                </form>
-            </div>
-        </div>
-    )
-}
-
-const LogggedIn = ({username, logOut}: {username: string, logOut: () => void, setLinkToken: () => void}) => {
-    const [linkToken, updateLinkToken] = useState('');
-    const [accessToken, setAccessToken] = useState('')
-    useEffect(() => {
-        axios.post('http://localhost:3500/api/create_link_token', {username: username})
-            .then((res) => {
-                updateLinkToken(res.data.link_token)
-            })
-    }, [username])
-
-    const options: PlaidLinkOptions = {
-        onSuccess: (public_token: string, metadata: any) => {
-            axios.post('http://localhost:3500/api/exchange_public_token', {public_token: public_token})
-                .then((res) => {
-                    console.log(res.data.access_token)
-                    axios.get('http://localhost:3500/api/accounts/balance?accessToken=' + res.data.access_token)
-                        .then((res) => {
-                            console.log(res)
-                        })
-                    setAccessToken(res.data.access_token)
-
-                })
-        },
-        onExit: (err: any, metadata: any) => {},
-        onEvent: (eventName: string, metadata: any) => {},
-        token: linkToken
-    }
-
-    const { open, ready } = usePlaidLink(options);
-
-    return (
-        <div tabIndex="0" className={'self-end dropdown dropdown-top mt-auto cursor-pointer rounded-xl p-1 w-full text-black text-xl flex flex-row gap-2 items-center dark:text-white'}
-             onClick={() => {document.getElementById("drop").focus(); document.getElementById("caret").classList.add('rotate-180')}}>
-            <ul tabIndex="0" id={'drop'} onBlur={() => document.getElementById("caret").classList.remove('rotate-180')}
-                className="dropdown-content mb-2 menu shadow rounded-box w-full text-white">
-                <button className={'w-full btn btn-primary'} onClick={logOut}>Log Out</button>
-                <button className={'w-full btn mt-1 btn-primary'} onClick={() => open()} disabled={!ready}>Connect with Plaid</button>
-            </ul>
-            <div className={'w-6 h-6 relative'}>
-                <Image src={icon} layout={'fill'} objectFit={'contain'}/>
-            </div>
-            <div className={'h-full'}>
-                <label className={'font-bold text-2xl'}>{username}</label>
-            </div>
-            <div className={'ml-auto mr-2 transition-all'} id={'caret'}>⋁</div>
-        </div>
-    )
-}
-
-const AddModal = ({username, returnItems}: {username: string, returnItems: (balance: number, items: any[]) => void}) => {
-    const [addElem, setAddElem] = useState(<TransactionsElem />);
-    const [title, setTitle] = useState('Transaction');
-    const [elemColors, setElemColors] = useState(['bg-accent', '', '']);
-
-    return (
-        <div className="modal-box relative text-black dark:text-white">
-            <label htmlFor="addModal" className="btn btn-sm btn-circle absolute right-2 top-2">✕</label>
-            <h3 className={'text-center text-2xl mb-2'}>Add {title}</h3>
-            <div className={'w-full flex flex-row'}>
-                <div className={`w-1/3 cursor-pointer text-center border dark:border-gray-500 p-2 ${elemColors[0]}`} onClick={() => {setAddElem(<TransactionsElem username={username} returnItems={(balance: number, items: any[]) => returnItems(balance, items)}/>); setTitle('Transaction'); setElemColors(['bg-accent', '', ''])}}>Transactions</div>
-                <div className={`w-1/3 cursor-pointer text-center border dark:border-gray-500 p-2 ${elemColors[1]}`} onClick={() => {setAddElem(<DepositElem username={username} returnItems={(balance: number, items: any[]) => returnItems(balance, items)}/>); setTitle('Deposit'); setElemColors(['', 'bg-accent', ''])}}>Deposit</div>
-                <div className={`w-1/3 cursor-pointer text-center border dark:border-gray-500 p-2 ${elemColors[2]}`} onClick={() => {setAddElem(<InvestmentElem username={username} returnItems={(balance: number, items: any[]) => returnItems(balance, items)}/>); setTitle('Budget'); setElemColors(['', '', 'bg-accent'])}}>Budget</div>
-            </div>
-            {addElem}
-        </div>
-    )
-}
 
 const AddElems = () => {
     return (
@@ -215,8 +56,9 @@ const Home = () => {
     const [addElem, setAddElem] = useState(<div></div>)
     const [transactions, setTransactions] = useState<any[]>([]);
     const [linkToken, setLinkToken] = useState(null)
+    const [chart, setChart] = useState(<></>);
 
-    const returnItems = (balance: number, items: any[]) => {
+    const returnItems = (balance: number, items: TransactionType[]) => {
         setTransactions(items);
         setAccountBalance(balance);
     }
@@ -258,9 +100,50 @@ const Home = () => {
     const logOut = () => {
         setLoggedInElem(<label htmlFor="loginModal" className="btn mt-auto modal-button text-white">Log in</label>);
         setAddElem(<div></div>);
+        setChart(<div></div>);
+        setAccountBalance(0);
     }
 
-    const logIn = (e) => {
+    const getInvestments = (user: string) => {
+        axios.get('http://localhost:3500/api/investments?username=' + user)
+            .then((res) => {
+                console.log(res.data)
+                returnInvestment(res.data.balance, res.data.items)
+            })
+    }
+
+    const randomColors = (length: number) => {
+        const colors = [];
+        for (let i = 0; i < length; i++) {
+            let color = '#'+Math.floor(Math.random()*16777215).toString(16);
+            colors.push(color);
+        }
+        return colors;
+    }
+
+    const returnInvestment = (balance: number, items: InvestmentType[]) => {
+        setAccountBalance(balance);
+        console.log(items)
+        const prices = items.map((item) => item.currentPrice);
+        const labels = items.map((item) => item.symbol);
+        console.log(labels, prices)
+        const data = {
+            labels: labels,
+            datasets: [{
+                label: 'Investments',
+                data: prices,
+                backgroundColor: randomColors(prices.length),
+                hoverOffset: 10
+            }],
+        }
+        const options = {
+            maintainAspectRatio: false,
+            responsive: true,
+        }
+        setChart(<Chart type={'pie'} data={data} options={options} />)
+    }
+
+    const logIn = (e: React.MouseEvent) => {
         e.preventDefault()
         const userval = inputValidation(usernameValue, 'username')
         const passval = inputValidation(password, 'password')
@@ -270,10 +153,11 @@ const Home = () => {
                 password: password
             }).then(res => {
                 setUsername(usernameValue)
-                setLoggedInElem(<LogggedIn username={usernameValue} logOut={logOut}/>)
+                setLoggedInElem(<LoggedIn username={usernameValue} logOut={logOut}/>)
                 setAddElem(<AddElems></AddElems>)
                 setTransactions(res.data.items)
                 setAccountBalance(res.data.balance)
+                getInvestments(usernameValue)
                 clearForm()
                 document.getElementById('loginModal').checked = false;
             }).catch((error) => {
@@ -300,7 +184,7 @@ const Home = () => {
         setPasswordColor('');
     }
 
-    const signUp = (e) => {
+    const signUp = (e: React.MouseEvent) => {
         e.preventDefault()
         const userval = inputValidation(usernameValue, 'username')
         const passval = inputValidation(password, 'password')
@@ -310,7 +194,7 @@ const Home = () => {
                     document.getElementById('signupModal').checked = false;
                     clearForm()
                     setUsername(usernameValue)
-                    setLoggedInElem(<LogggedIn username={response.data.username}/>)
+                    setLoggedInElem(<LoggedIn username={response.data.username} logOut={() => logOut()}/>)
                     setAddElem(<AddElems></AddElems>)
                 })
                 .catch((error) => {
@@ -367,7 +251,7 @@ const Home = () => {
             </div>
             <input type="checkbox" id="addModal" className="modal-toggle"/>
             <div className="modal">
-                <AddModal username={username} returnItems={(balance, items) => returnItems(balance, items)}></AddModal>
+                <AddModal username={username} returnItems={(balance, items) => returnItems(balance, items)} returnInvestment={(balance, items) => returnInvestment(balance, items)}></AddModal>
             </div>
             <div>
                 <div className={'h-screen w-screen bg-[#f7f7f7] dark:bg-[#151718] dark:text-white'}>
@@ -377,11 +261,8 @@ const Home = () => {
                                 <div className={'h-full flex flex-col gap-12'}>
                                     <h1 className={'text-3xl mt-4 font-bold'}>Ouroboros</h1>
                                     <div className={'flex flex-col gap-2 text-xl w-full'}>
-                                        <Link href={'/temppage'}>
+                                        <Link href={'/'}>
                                             <a>Overview</a>
-                                        </Link>
-                                        <Link href={'/lending'}>
-                                            <a>Lending</a>
                                         </Link>
                                     </div>
                                     {loggedInElem}
@@ -406,24 +287,18 @@ const Home = () => {
                             <div className={'row-span-4'}>
                                 <div className={'grid grid-cols-7 gap-6 h-full w-full'}>
                                     <div className={'col-span-4'}>
-                                        <div className={'flex flex-col h-full bg-gray-300 dark:bg-[#0f1112] gap-8 p-4 rounded-lg'}>
-                                            <div className={'flex flex-row gap-2 ml-1'}>
-                                                <div className={`text-md ${dayStyles[0]} cursor-pointer`} onClick={() => setTime('1')}>1D</div>
-                                                <div className={`text-md ${dayStyles[1]} cursor-pointer`} onClick={() => setTime('7')}>7D</div>
-                                                <div className={`text-md ${dayStyles[2]} cursor-pointer`} onClick={() => setTime('30')}>30D</div>
-                                            </div>
-                                            <div className={'w-full flex flex-row items-center'}>
-
+                                        <div className={'h-full bg-gray-300 dark:bg-[#0f1112] grid grid-rows-8 p-4 rounded-lg'}>
+                                            <h3 className={'text-4xl row-span-1'}>Investments</h3>
+                                            <div className={'row-span-7 w-full h-full relative'}>
+                                                {chart}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className={'flex flex-col col-span-3 p-4 bg-gray-300 gap-2 rounded-lg dark:bg-[#0f1112]'}>
-                                        <div className={'w-full flex flex-row items-center'}>
-                                            <div className={'text-4xl'}>Transactions</div>
-                                        </div>
+                                    <div className={'flex flex-col h-full col-span-3 p-4 bg-gray-300 gap-2 rounded-lg dark:bg-[#0f1112]'}>
+                                        <h3 className={'text-4xl'}>Transactions</h3>
                                         <div className={'flex flex-col w-full'}>
-                                            <div className={'flex flex-col h-72 w-full mt-4 overflow-scroll'}>
-                                                {transactions.map((item: any, index: number) => {
+                                            <div className={'flex flex-col h-80 w-full mt-4 overflow-scroll'}>
+                                                {transactions.map((item, index: number) => {
                                                     return (
                                                         <div key={index} className={'flex shrink-0 flex-row items-center w-full h-16 shadow-sm rounded-xl'}>
                                                             <div className={'h-full w-10 relative mr-4'}>

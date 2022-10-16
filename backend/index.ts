@@ -6,18 +6,21 @@ import axios from 'axios'
 import bcrypt from 'bcryptjs'
 // @ts-ignore
 import bodyParser from 'body-parser'
-import React from "react";
 import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
+import InvestmentType from "../types/InvestmentType";
+const finnhub = require('finnhub');
+
 const User = require('./schema.ts')
 
-const app = express()
+interface GetInvestmentType extends InvestmentType {
+    currentPrice: number
+}
 
+const app = express()
 app.use(cors())
 app.use(bodyParser.json())
 
 const saltRounds = 10
-
-console.log(process.env.PLAID_ENV)
 
 const client = new PlaidApi(new Configuration({
         basePath: PlaidEnvironments[process.env.PLAID_ENV],
@@ -30,6 +33,10 @@ const client = new PlaidApi(new Configuration({
         },
     })
 )
+
+const api_key = finnhub.ApiClient.instance.authentications['api_key'];
+api_key.apiKey = process.env.FINNHUBAPIKEY
+const finnhubClient = new finnhub.DefaultApi()
 
 mongoose.connect(`mongodb+srv://admin:${process.env.MONGOOSE_PASSWORD}@cluster0.fy0zm.mongodb.net/?retryWrites=true&w=majority`).then(() => {
     console.log('Connected to MongoDB')
@@ -197,6 +204,101 @@ app.get('/api/accounts/balance', (req, res) => {
         .then((response) => {
             res.json(response.data)
         })
+})
+
+
+//TODO update balance from current price
+app.post('/api/investments', (req, res) => {
+    const { username, amount, price, symbol, type } = req.body
+    const investment = {
+        symbol: symbol,
+        initialPrice: price,
+        type: type,
+        amount: amount
+    }
+
+    User.findOne({username: username})
+        .then((user: any) => {
+            if (user) {
+                user.investments.push(investment)
+                user.balance = user.balance + (Number(amount) * Number(price))
+                user.save()
+                    //@ts-ignore
+                    .then((response: any) => {
+                        mongoose.connection.close()
+                        console.log(user)
+                        res.json({balance: user.balance, items: user.investments})
+                    }).catch((error: any) => {
+                        mongoose.connection.close()
+                        res.status(500).send(error)
+                    }
+                )
+            } else {
+                mongoose.connection.close()
+                res.status(404).send('User not found')
+            }
+        })
+})
+
+app.get('/api/investments', (req, res) => {
+    const username = req.query.username
+    User.findOne({username: username})
+        .then((user: typeof User) => {
+            if (user) {
+                const maindata: GetInvestmentType[] = []
+                for (let i = 0; i < user.investments.length; i++) {
+                    const investment = user.investments[i]
+                    if (investment.type === "Stock") {
+                        console.log(investment.symbol)
+                        // axios.get(`https://finnhub.io/api/v1/quote?symbol=${investmentS}&token=ccaebnqad3i0kro2s54g`)
+                        finnhubClient.quote(investment.symbol, (error: any, data: any, response: any) => {
+                            if (error) {
+                                console.log(error)
+                                mongoose.connection.close()
+                            } else {
+                                const investmentData: GetInvestmentType = {
+                                    symbol: investment.symbol,
+                                    initialPrice: investment.initialPrice,
+                                    currentPrice: data.c,
+                                    type: investment.type,
+                                    amount: investment.amount
+                                }
+                                maindata.push(investmentData)
+                                if (maindata.length === user.investments.length) {
+                                    let balance = user.balance
+                                    for (let j = 0; j < maindata.length; j++) {
+                                        const investment = maindata[j]
+                                        balance = balance + (Number(investment.amount) * Number(investment.currentPrice))
+                                    }
+                                    mongoose.connection.close()
+                                    res.json(
+                                        {items: maindata, balance: balance}
+                                    )
+                                }
+                            }
+                        })
+                    }
+                }
+            } else {
+                mongoose.connection.close()
+                res.status(404).send('User not found')
+            }
+        })
+})
+
+app.get('/api/currentPrice', (req, res) => {
+    const symbol = req.query.symbol
+    const type = req.query.type
+    console.log(symbol, type)
+    if (type === 'stock') {
+        finnhubClient.quote(symbol, (error: any, data: any, response: any) => {
+            if (error) {
+                console.log(error)
+            } else {
+                res.json({price: data.c})
+            }
+        })
+    }
 })
 
 const port = 3500

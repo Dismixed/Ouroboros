@@ -9,11 +9,19 @@ const transactionSchema = new mongoose.Schema({
     newBalance: Number!
 })
 
+const investmentSchema = new mongoose.Schema({
+    symbol: String,
+    initialPrice: Number,
+    type: String,
+    amount: Number
+})
+
 const userSchema = new mongoose.Schema({
     username: String!,
     password: String!,
     balance: Number!,
-    items: [transactionSchema]
+    items: [transactionSchema],
+    investments: [investmentSchema]
 })
 
 const User = mongoose.model('user', userSchema)
