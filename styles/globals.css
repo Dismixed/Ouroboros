@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media (prefers-color-scheme: light) {
+    #filter {
+        filter: invert(100%);
+    }
+}
+@media (prefers-color-scheme: dark) {
+    #filter {
+        filter: invert(0%);
+    }
+}
+
+
+

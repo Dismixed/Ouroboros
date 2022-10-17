@@ -22,3 +22,4 @@ const LoggedIn = ({username, logOut}: {username: string, logOut: () => void}) =>
 }
 
 export default LoggedIn;
+
