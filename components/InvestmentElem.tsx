@@ -35,7 +35,8 @@ const InvestmentElem = ({username, returnInvestment}: {username: string, returnI
             username: username,
         }).then((response) => {
             console.log(response);
-            document.getElementById('addModal').checked = false
+            const ele = document.getElementById('addModal') as HTMLInputElement
+            ele.checked = false
             returnInvestment(response.data.balance, response.data.items);
         })
     }

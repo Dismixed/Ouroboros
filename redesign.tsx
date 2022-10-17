@@ -1,14 +1,14 @@
 import React, {useState} from "react";
-import TransactionType from "../types/TransactionType";
+import TransactionType from "./types/TransactionType";
 import axios from "axios";
-import InvestmentType from "../types/InvestmentType";
+import InvestmentType from "./types/InvestmentType";
 import {Chart} from "react-chartjs-2";
-import LoggedIn from "../components/LoggedInElem";
-import AddModal from "../components/AddModal";
+import LoggedIn from "./components/LoggedInElem";
+import AddModal from "./components/AddModal";
 import Link from "next/link";
 import Image from "next/image";
-import circleplus from "../public/circleplus.svg";
-import circleminus from "../public/circleminus.svg";
+import circleplus from "./public/circleplus.svg";
+import circleminus from "./public/circleminus.svg";
 
 const Home = () => {
     const [accountBalance, setAccountBalance] = useState(0);
@@ -124,12 +124,10 @@ const Home = () => {
             }).then(res => {
                 setUsername(usernameValue)
                 setLoggedInElem(<LoggedIn username={usernameValue} logOut={logOut}/>)
-                setAddElem(<AddElems></AddElems>)
                 setTransactions(res.data.items)
                 setAccountBalance(res.data.balance)
                 getInvestments(usernameValue)
                 clearForm()
-                document.getElementById('loginModal').checked = false;
             }).catch((error) => {
                 console.log(error)
                 if (error.response.status == 404) {
@@ -161,11 +159,9 @@ const Home = () => {
         if (userval && passval) {
             axios.post('http://localhost:3500/api/signup', {"username": usernameValue, "password": password})
                 .then((response) => {
-                    document.getElementById('signupModal').checked = false;
                     clearForm()
                     setUsername(usernameValue)
                     setLoggedInElem(<LoggedIn username={response.data.username} logOut={() => logOut()}/>)
-                    setAddElem(<AddElems></AddElems>)
                 })
                 .catch((error) => {
                     if (error.response.status == 400) {
@@ -193,7 +189,6 @@ const Home = () => {
                         <label className={'text-md text-red-500'}>{passwordError}</label>
                         <button className={'btn btn-accent mt-4'} onClick={(e) => signUp(e)}>Submit</button>
                         <p className={'text-center mt-6'}>Need to <label className={'text-blue-400 cursor-pointer modal-button'} htmlFor={'loginModal'} onClick={() => {
-                            document.getElementById('signupModal').checked = false;
                             clearForm()
                         }}>log in?</label></p>
                     </form>
@@ -213,7 +208,6 @@ const Home = () => {
                         <label className={'text-md text-red-500'}>{passwordError}</label>
                         <button className={'btn btn-accent mt-4'} onClick={(e) => logIn(e)}>Submit</button>
                         <p className={'text-center mt-6'}>Need to <label className={'text-blue-400 cursor-pointer modal-button'} htmlFor={'signupModal'} onClick={() => {
-                            document.getElementById('loginModal').checked = false;
                             clearForm()
                         }}>create an account?</label></p>
                     </form>

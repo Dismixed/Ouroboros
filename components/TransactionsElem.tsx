@@ -18,7 +18,8 @@ const TransactionsElem = ({username, returnItems}: {username: string, returnItem
             amount: transAmount
         })
             .then((res) => {
-                document.getElementById('addModal').checked = false
+                const ele = document.getElementById('addModal') as HTMLInputElement
+                ele.checked = false
                 returnItems(res.data.balance, res.data.items);
             })
     }

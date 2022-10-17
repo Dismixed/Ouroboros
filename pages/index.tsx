@@ -256,7 +256,10 @@ const Home = () => {
         <div>
             <button className={'rounded-full text-white bg-gradient-to-br from-green-400 to-green-700 ' +
                 'flex flex-row items-center justify-center h-12 w-12 fixed bottom-4 right-4 text-2xl'}
-                    onClick={() => document.getElementById('addModal').checked = true}>+</button>
+                    onClick={() => {
+                        const ele = document.getElementById('addModal') as HTMLInputElement
+                        ele.checked = false}
+            }>+</button>
             <input type="checkbox" id="signupModal" className="modal-toggle"/>
             <div className="modal">
                 <div className="modal-box relative text-black dark:text-white">
@@ -271,7 +274,8 @@ const Home = () => {
                         <label className={'text-md text-red-500'}>{passwordError}</label>
                         <button className={'btn btn-accent mt-4'} onClick={(e) => signUp(e)}>Submit</button>
                         <p className={'text-center mt-6'}>Need to <label className={'text-blue-400 cursor-pointer modal-button'} htmlFor={'loginModal'} onClick={() => {
-                            document.getElementById('signupModal').checked = false;
+                            const ele = document.getElementById('signupModal') as HTMLInputElement
+                            ele.checked = false
                             clearForm()
                         }}>log in?</label></p>
                     </form>
@@ -291,7 +295,8 @@ const Home = () => {
                         <label className={'text-md text-red-500'}>{passwordError}</label>
                         <button className={'btn bg-green-600 hover:bg-green-500 text-white mt-4'} onClick={(e) => logIn(e)}>Submit</button>
                         <p className={'text-center mt-6'}>Need to <label className={'text-blue-400 cursor-pointer modal-button'} htmlFor={'signupModal'} onClick={() => {
-                            document.getElementById('loginModal').checked = false;
+                            const ele = document.getElementById('loginModal') as HTMLInputElement
+                            ele.checked = false
                             clearForm()
                         }}>create an account?</label></p>
                     </form>

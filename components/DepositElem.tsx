@@ -13,7 +13,8 @@ const DepositElem = ({username, returnItems}: {username: string, returnItems: (b
         axios.patch('http://localhost:3500/api/deposit', {username: username, amount: depositAmount, date: depositDate})
             .then((res) => {
                 console.log(res);
-                document.getElementById('addModal').checked = false
+                const ele = document.getElementById('addModal') as HTMLInputElement
+                ele.checked = false
                 returnItems(res.data.balance, res.data.items);
             })
     }
