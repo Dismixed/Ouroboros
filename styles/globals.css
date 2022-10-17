@@ -13,5 +13,13 @@
     }
 }
 
+.title,
+.description {
+    text-align: center;
+}
+
+ma {
+    margin: 0;
+}
 
 
