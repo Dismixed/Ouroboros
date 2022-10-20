@@ -157,12 +157,12 @@ const Home = () => {
                 setUsername(usernameValue)
                 setTransactions(res.data.items)
                 setAccountBalance(res.data.balance)
-                clearForm()
                 const ele = document.getElementById('loginModal') as HTMLInputElement
                 ele.checked = false;
-                axios.post('https://ouroboros-123.herokuapp.com/api/create_link_token', {username: username})
+                axios.post('https://ouroboros-123.herokuapp.com/api/create_link_token', {username: usernameValue})
                     .then((res) => {
                         updateLinkToken(res.data.link_token)
+                        clearForm()
                     })
             }).catch((error) => {
                 console.log(error)
